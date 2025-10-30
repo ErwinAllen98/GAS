@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharyngitis DDx: The Opus Magnum Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #34495e; --secondary-color: #2c3e50; --bg-color: #f4f7f9;
+            --card-bg: #f4f7f9; --text-color: #3D4A5C; --border-color: #e0e5ec;
+            
+            --c-red: #EA4335;    /* Red Flags */
+            --c-green: #34A853;  /* Typical Viral */
+            --c-yellow: #FBBC05; /* Bacterial */
+            --c-purple: #8E44AD; /* Mono Syndromes */
+            --c-slate: #5D6D7E;  /* Systemic & Atypical */
+            --c-blue: #4285F4;   /* Non-Infectious */
+        }
+        html { scroll-behavior: smooth; }
+        body { 
+            font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-color); 
+            line-height: 1.7; margin: 0; padding: 20px; 
+            -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+        }
+        .container { max-width: 1200px; margin: 20px auto; display: flex; flex-direction: column; gap: 30px; }
+        
+        .dashboard-card { background: var(--card-bg); border-radius: 20px; box-shadow: 7px 7px 15px #c8cdd5, -7px -7px 15px #ffffff; padding: 25px; }
+        .card-header h3 { font-weight: 700; margin: 0 0 15px 0; font-size: 1.3em; }
+        
+        .compass-container {
+            display: grid; place-items: center; position: relative;
+            width: 70vh; height: 70vh; 
+            max-width: 90vw; max-height: 90vw;
+            margin: 40px auto;
+        }
+        
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        #compass {
+            width: 100%; height: 100%;
+            border-radius: 50%; cursor: pointer; position: relative;
+            background: conic-gradient(
+                var(--c-red) 0% 5%, var(--c-green) 5% 50%, var(--c-yellow) 50% 65%,
+                var(--c-purple) 65% 80%, var(--c-slate) 80% 90%, var(--c-blue) 90% 100%
+            );
+            animation: spin 25s linear infinite;
+        }
+        
+        #compass-center {
+            position: absolute; 
+            width: 34vh; height: 34vh;
+            max-width: 45vw; max-height: 45vw;
+            background: var(--card-bg);
+            border-radius: 50%; display: grid; place-items: center; text-align: center;
+            pointer-events: none; box-shadow: 7px 7px 15px #c8cdd5, -7px -7px 15px #ffffff;
+            transition: background-color 0.3s ease;
+        }
+        
+        #center-text-hover {
+            color: white; opacity: 0;
+            transition: opacity 0.3s ease; position: absolute;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 10px;
+        }
+        
+        #hover-name { font-size: clamp(24px, 5vw, 48px); font-weight: 700; }
+        #hover-percentage { font-size: clamp(16px, 3.5vw, 32px); font-weight: 400; opacity: 0.8; margin-top: 1vh; }
+
+        #assessment-card { display: none; margin-top: 30px; }
+        .assessment-content ul { list-style-type: disc; padding-left: 25px; margin: 10px 0; }
+        .assessment-content h4 { margin: 25px 0 10px 0; color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 5px; }
+        .assessment-content h5 { margin-top: 20px; }
+        .assessment-content strong { color: var(--secondary-color); }
+        
+        /* --- COMMAND: THE FINAL SIGNATURE --- */
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: var(--secondary-color);
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="dashboard-card" id="triage-card">
+        <div class="compass-container" id="compass-wrapper">
+            <div id="compass"></div>
+            <div id="compass-center">
+                <div id="center-text-hover">
+                    <span id="hover-name"></span>
+                    <span id="hover-percentage"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-card" id="assessment-card"></div>
+    
+    <footer class="footer">
+        <p>Developed by: Erfan Alinejad Ghadi, MD & Fatemeh Babapour, BSc.</p>
+    </footer>
+</div>
+
+<script>
+    const assessmentCard = document.getElementById('assessment-card');
+    const compassWrapper = document.getElementById('compass-wrapper');
+    const compass = document.getElementById('compass');
+    const compassCenter = document.getElementById('compass-center');
+    const textHover = document.getElementById('center-text-hover');
+    const hoverName = document.getElementById('hover-name');
+    const hoverPercentage = document.getElementById('hover-percentage');
+
+    const segments = [
+        { id: 'redFlags', name: 'Red Flags', start: 0, end: 5, color: 'var(--c-red)', percentage: 5 },
+        { id: 'viral', name: 'Typical Viral', start: 5, end: 50, color: 'var(--c-green)', percentage: 45 },
+        { id: 'bacterial', name: 'Bacterial', start: 50, end: 65, color: 'var(--c-yellow)', percentage: 15 },
+        { id: 'mono', name: 'Mono Syndromes', start: 65, end: 80, color: 'var(--c-purple)', percentage: 15 },
+        { id: 'systemic', name: 'Systemic & Atypical', start: 80, end: 90, color: 'var(--c-slate)', percentage: 10 },
+        { id: 'nonInfectious', name: 'Non-Infectious', start: 90, end: 100, color: 'var(--c-blue)', percentage: 10 }
+    ];
+
+    const ddxContent = {
+        redFlags: `<div class="card-header"><h3 style="color: var(--c-red);">Red Flags: Urgent Airway & Deep Infection Assessment</h3></div><div class="assessment-content"><h4>Signs of Upper Airway Obstruction</h4><ul><li><strong>Dysphonia:</strong> Muffled ("hot potato") voice or significant hoarseness.</li><li><strong>Sialorrhea:</strong> Inability to swallow saliva, leading to drooling.</li><li><strong>Stridor:</strong> High-pitched inspiratory sound indicating critical airway narrowing.</li><li><strong>Respiratory Distress:</strong> Tachypnea, dyspnea, or use of accessory muscles (retractions).</li><li><strong>Compensatory Posturing:</strong> "Tripod" or "sniffing" position.</li></ul><h4>Features of Deep Neck Space Infections</h4><ul><li><strong>Severe Unilateral Odynophagia:</strong> Painful swallowing localized to one side.</li><li><strong>Oropharyngeal Asymmetry:</strong> Bulging of the soft palate or pharyngeal wall.</li><li><strong>Cervical Signs:</strong> Neck swelling, tenderness, crepitus, or nuchal rigidity.</li><li><strong>Trismus:</strong> Inability to open the jaw due to masseter muscle spasm.</li><li><strong>Systemic Toxicity:</strong> High fever, rigors, and a toxic appearance.</li></ul><h4>Clinical Features of Specific Syndromes</h4><ul><li><strong>Peritonsillar Abscess (Quinsy):</strong> Classic triad of fever, unilateral odynophagia, and trismus, often with uvular deviation.</li><li><strong>Ludwig's Angina:</strong> Rapidly progressive cellulitis of the submandibular space, causing floor of mouth elevation and woody induration.</li><li><strong>Lemierre Syndrome:</strong> Septic thrombophlebitis of the internal jugular vein, suspect in a patient with worsening pharyngitis despite antibiotics and potential septic pulmonary emboli.</li><li><strong>Epiglottitis:</strong> Severe odynophagia out of proportion to oropharyngeal exam findings.</li></ul></div>`,
+        bacterial: `<div class="card-header"><h3 style="color: var(--c-yellow);">Bacterial Pharyngitis: Etiology & Clinical Clues</h3></div><div class="assessment-content"><h4>Group A Streptococcus (GAS) - The Archetype</h4><ul><li><strong>Classic Presentation:</strong> A constellation of acute onset fever, tonsillar exudates, tender anterior cervical adenopathy, and absence of cough. Associated symptoms may include headache and abdominal pain.</li></ul><h4>The GAS Mimics & Scarlatiniform Eruptions</h4><ul><li><strong>Streptococcus Groups C & G:</strong> Clinically indistinguishable from GAS, can also cause a scarlatiniform rash.</li><li><strong>Arcanobacterium haemolyticum:</strong> More common in adolescents, often associated with a scarlatiniform rash.</li></ul><h4>Diagnosis Driven by Exposure & History</h4><ul><li><strong>Neisseria gonorrhoeae:</strong> Consider in sexually active individuals with a history of oral-genital contact.</li><li><strong>Corynebacterium diphtheriae:</strong> Hallmark is a gray, firmly adherent pseudomembrane. Suspect with relevant travel history or incomplete immunization.</li><li><strong>Francisella tularensis (Tularemia):</strong> Associated with exposure to wild game or contaminated water sources; may present with ulcerative-exudative pharyngitis.</li></ul><h4>The Anaerobic Threat: Fusobacterium necrophorum</h4><ul><li>A cause of severe, persistent, or worsening pharyngitis, particularly in adolescents. Strongly associated with <strong>Lemierre Syndrome</strong> (septic thrombophlebitis of the internal jugular vein), a critical red flag diagnosis.</li></ul><h4>Atypical Pathogens</h4><ul><li><strong>Mycoplasma pneumoniae:</strong> Pharyngitis is often a component of a broader respiratory illness, including bronchitis or atypical pneumonia, rather than an isolated finding.</li></ul></div>`,
+        // --- COMMAND: KNOWLEDGE COMPLETION ---
+        mono: `
+            <div class="card-header"><h3 style="color: var(--c-purple);">Mono-Like Syndromes: Differential Diagnosis</h3></div>
+            <div class="assessment-content">
+                <h4>General Clinical Constellation</h4>
+                <ul><li>Characterized by the triad of fever, pharyngitis, and lymphadenopathy, often accompanied by profound fatigue (malaise) and sometimes splenomegaly.</li></ul>
+                
+                <h4>Etiologies & Distinguishing Features</h4>
+                <ul>
+                    <li><strong>Epstein-Barr Virus (EBV):</strong> The classic cause of infectious mononucleosis. Hallmark is prominent <strong>posterior cervical lymphadenopathy</strong>. Pharyngitis is often severely exudative. The diagnosis is supported by a positive heterophile antibody test (Monospot).</li>
+                    <li><strong>Cytomegalovirus (CMV):</strong> A common cause of heterophile-negative mononucleosis. Pharyngitis and lymphadenopathy are typically less severe than in EBV. More common in adults.</li>
+                    <li><strong>Primary HIV Infection (Acute Retroviral Syndrome):</strong> A critical "can't-miss" mimic of mononucleosis. Suspect in patients with risk factors. The presence of a <strong>maculopapular rash</strong> or <strong>mucocutaneous ulcers</strong> are important distinguishing clues.</li>
+                </ul>
+            </div>`,
+        systemic: `
+            <div class="card-header"><h3 style="color: var(--c-slate);">Systemic & Atypical Causes of Pharyngitis</h3></div>
+            <div class="assessment-content">
+                <h4>Inflammatory & Vasculitic Syndromes</h4>
+                <ul>
+                    <li><strong>Kawasaki Disease:</strong> A pediatric emergency. Suspect with fever >5 days plus signs like conjunctivitis, rash, extremity changes, and prominent cervical adenopathy. The pharyngitis is part of a broader mucosal inflammation ("strawberry tongue").</li>
+                    <li><strong>PFAPA Syndrome:</strong> Characterized by <strong>P</strong>eriodic <strong>F</strong>ever, <strong>A</strong>phthous stomatitis, <strong>P</strong>haryngitis, and cervical <strong>A</strong>denitis. The key is the predictable, cyclical nature of the episodes.</li>
+                </ul>
+
+                <h4>Hematologic & Oncologic Emergencies</h4>
+                <ul>
+                    <li><strong>Leukemia/Lymphoma:</strong> Pharyngitis can be a presenting sign of neutropenic mucositis in a patient with an undiagnosed malignancy. Suspect with associated systemic symptoms (night sweats, weight loss, persistent fever).</li>
+                    <li><strong>Agranulocytosis:</strong> Often drug-induced. Presents as severe, sometimes necrotic, pharyngitis in the context of a severely suppressed white blood cell count.</li>
+                </ul>
+
+                <h4>Referred & Neuropathic Pain</h4>
+                <ul>
+                    <li><strong>Cardiac Ischemia (Angina/MI):</strong> A critical red flag. Throat pain can be a manifestation of referred cardiac pain. Suspect if the pain is exertional and associated with other cardiac symptoms (dyspnea, diaphoresis).</li>
+                    <li><strong>Thyroiditis:</strong> Pain is localized over the thyroid gland and is associated with tenderness on palpation.</li>
+                    <li><strong>Glossopharyngeal Neuralgia:</strong> Presents as sharp, paroxysmal, lancinating unilateral pain, often triggered by swallowing.</li>
+                </ul>
+            </div>`,
+        viral: `<div class="card-header"><h3 style="color: var(--c-green);">Typical Viral Pharyngitis Profile</h3></div><div class="assessment-content"><h4>General Clinical Clues</h4><ul><li>Gradual onset, Cough, Coryza, Conjunctivitis, Hoarseness, Oral ulcers, low-grade fever.</li></ul><h4>Key Viral Syndromes & Distinguishing Features</h4><ul><li><strong>Influenza:</strong> Characterized by prominent systemic symptoms (abrupt high fever, myalgia, headache) that often overshadow the sore throat. Follows a seasonal pattern.</li><li><strong>Adenovirus:</strong> Often presents as the classic triad of Pharyngoconjunctival Fever (pharyngitis, conjunctivitis, fever). Tonsillar exudates can be present, mimicking GAS.</li><li><strong>Enterovirus (Coxsackie A):</strong> Identified by characteristic vesicular or ulcerative lesions (Herpangina) on the posterior oropharynx and soft palate. May be associated with Hand, Foot, and Mouth Disease.</li><li><strong>Herpes Simplex Virus (HSV):</strong> Typically causes a severe primary herpetic gingivostomatitis with high fever, odynophagia, and vesicular lesions on the lips, palate, and gingiva, most common in young adults.</li><li><strong>SARS-CoV-2:</strong> A highly variable presentation where pharyngitis can be a primary symptom. Diagnosis often relies on associated features (cough, dyspnea, anosmia) and a history of epidemiologic exposure.</li></ul><h4>Viruses with Nasopharyngitis Dominance (Common Cold)</h4><ul><li>Includes <strong>Rhinovirus, seasonal Coronaviruses, RSV, and Parainfluenza virus</strong>.</li><li>In these infections, nasal symptoms (coryza, congestion) typically predominate, and the pharyngitis is often a milder, secondary complaint. Parainfluenza is notably associated with croup in children.</li></ul></div>`,
+        nonInfectious: `
+            <div class="card-header"><h3 style="color: var(--c-blue);">Non-Infectious Pharyngitis Profile</h3></div>
+            <div class="assessment-content">
+                <h4>Irritation from Above & Below</h4>
+                <ul>
+                    <li><strong>Laryngopharyngeal Reflux (LPR):</strong> Gastric acid irritates the pharynx. Classic symptoms include chronic throat clearing, globus sensation (lump in the throat), and a sore throat that is often worse in the morning.</li>
+                    <li><strong>Post-nasal Drip Syndrome:</strong> Chronic drainage from the sinuses irritates the pharynx. Often associated with allergic or vasomotor rhinitis. A "cobblestone" appearance of the posterior pharyngeal wall is a common sign.</li>
+                </ul>
+                
+                <h4>Direct Irritation & Trauma</h4>
+                <ul>
+                    <li><strong>Environmental/Occupational Irritants:</strong> Exposure to smoke, chemicals, or dry air.</li>
+                    <li><strong>Vocal Strain:</strong> Overuse or improper use of the voice.</li>
+                </ul>
+
+                <h4>Neoplasm - A Critical Consideration</h4>
+                <ul>
+                    <li>A persistent, localized, or unilateral sore throat, especially in a patient with risk factors (smoking, alcohol use), should raise suspicion for malignancy.</li>
+                    <li><strong>Associated Red Flags:</strong> Unilateral odynophagia, referred otalgia (ear pain), dysphagia, weight loss, or a palpable neck mass.</li>
+                </ul>
+            </div>`
+    };
+
+    function getAngle(event) {
+        const rect = compassWrapper.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const angleRad = Math.atan2(event.clientY - centerY, event.clientX - centerX);
+        let angleDeg = angleRad * 180 / Math.PI;
+        
+        const computedStyle = window.getComputedStyle(compass);
+        const matrix = new DOMMatrix(computedStyle.transform);
+        const currentRotation = Math.atan2(matrix.b, matrix.a) * (180 / Math.PI);
+
+        angleDeg = (angleDeg - currentRotation + 450) % 360;
+        return angleDeg;
+    }
+
+    function getSegmentFromAngle(angle) {
+        const percentage = angle / 3.6;
+        return segments.find(s => percentage >= s.start && percentage < s.end);
+    }
+
+    function setState(segment) {
+        compassCenter.style.backgroundColor = segment.color;
+        hoverName.textContent = segment.name;
+        hoverPercentage.textContent = `${segment.percentage}%`;
+        textHover.style.opacity = '1';
+        assessmentCard.innerHTML = ddxContent[segment.id];
+        assessmentCard.style.display = 'block';
+    }
+
+    compassWrapper.addEventListener('mousemove', (e) => {
+        const angle = getAngle(e);
+        const segment = getSegmentFromAngle(angle);
+        if (segment) {
+            compassCenter.style.backgroundColor = segment.color;
+            hoverName.textContent = segment.name;
+            hoverPercentage.textContent = `${segment.percentage}%`;
+        }
+    });
+
+    compassWrapper.addEventListener('mouseleave', () => {
+        setState(segments[0]);
+    });
+
+    compassWrapper.addEventListener('click', (e) => {
+        const angle = getAngle(e);
+        const segment = getSegmentFromAngle(angle);
+        if (segment) {
+            setState(segment);
+            assessmentCard.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setState(segments[0]);
+    });
+
+</script>
+</body>
+</html>
