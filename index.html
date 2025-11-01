@@ -3,193 +3,447 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pharyngitis DDx: The Opus Magnum Edition</title>
+    <title>Pharyngitis DDx Navigator</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         :root {
-            --primary-color: #34495e; --secondary-color: #2c3e50; --bg-color: #f4f7f9;
-            --card-bg: #f4f7f9; --text-color: #3D4A5C; --border-color: #e0e5ec;
+            --bg-color: #f4f7f9;
+            --card-bg: #ffffff;
+            --text-color: #3D4A5C;
+            --border-color: #e0e5ec;
+            --shadow-light: #ffffff;
+            --shadow-dark: #c8cdd5;
+            --accent-color: var(--c-blue);
             
-            --c-red: #EA4335;    /* Red Flags */
-            --c-green: #34A853;  /* Typical Viral */
-            --c-yellow: #FBBC05; /* Bacterial */
-            --c-purple: #8E44AD; /* Mono Syndromes */
-            --c-slate: #5D6D7E;  /* Systemic & Atypical */
-            --c-blue: #4285F4;   /* Non-Infectious */
+            --c-red: #EA4335; --c-green: #34A853; --c-yellow: #FBBC05;
+            --c-purple: #8E44AD; --c-slate: #5D6D7E; --c-blue: #4285F4;
         }
+        body.dark-mode {
+            --bg-color: #121212; --card-bg: #1E1E1E; --text-color: #E0E0E0;
+            --border-color: #333333; --shadow-light: #2a2a2a; --shadow-dark: #000000;
+        }
+
         html { scroll-behavior: smooth; }
         body { 
             font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-color); 
             line-height: 1.7; margin: 0; padding: 20px; 
+            transition: background-color 0.3s ease, color 0.3s ease;
             -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
         }
-        .container { max-width: 1200px; margin: 20px auto; display: flex; flex-direction: column; gap: 30px; }
-        
-        .dashboard-card { background: var(--card-bg); border-radius: 20px; box-shadow: 7px 7px 15px #c8cdd5, -7px -7px 15px #ffffff; padding: 25px; }
-        .card-header h3 { font-weight: 700; margin: 0 0 15px 0; font-size: 1.3em; }
-        
+        .header {
+            display: flex; justify-content: flex-end; align-items: center; gap: 15px;
+            max-width: 1400px; margin: 0 auto 10px;
+        }
+        .icon-button {
+            background: var(--card-bg); border: none; width: 40px; height: 40px;
+            border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            box-shadow: 3px 3px 7px var(--shadow-dark), -3px -3px 7px var(--shadow-light);
+            transition: all 0.2s ease-in-out;
+        }
+        .icon-button:hover { box-shadow: 1px 1px 3px var(--shadow-dark), -1px -1px 3px var(--shadow-light); }
+        .icon-button svg { width: 20px; height: 20px; fill: var(--text-color); }
+        .sun-icon { display: none; } .moon-icon { display: block; }
+        body.dark-mode .sun-icon { display: block; } body.dark-mode .moon-icon { display: none; }
+
+        .dashboard-card { 
+            background: var(--card-bg); border-radius: 20px; 
+            box-shadow: 7px 7px 15px var(--shadow-dark), -7px -7px 15px var(--shadow-light); 
+            padding: 25px; transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-header h3 { 
+            font-weight: 700; margin: 0 0 15px 0; font-size: 1.3em; 
+            border-bottom: 2px solid var(--border-color); padding-bottom: 10px;
+        }
+
+        .main-container {
+            max-width: 1400px; margin: 20px auto; display: flex; flex-direction: row;
+            gap: 30px; align-items: flex-start;
+        }
+        .compass-section { flex: 1; position: sticky; top: 20px; display: flex; flex-direction: column; align-items: center; }
+        .assessment-section { flex: 1.2; }
+        .assessment-content ul { padding-left: 20px; margin-top: 5px; } .assessment-content li { margin-bottom: 8px; }
+        .assessment-content h4 { margin-bottom: 5px; margin-top: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        .assessment-content h4:first-child { margin-top: 0; }
+        .credits-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.85em;
+            font-style: italic;
+            opacity: 0.7;
+            color: var(--text-color);
+        }
+
         .compass-container {
             display: grid; place-items: center; position: relative;
-            width: 70vh; height: 70vh; 
-            max-width: 90vw; max-height: 90vw;
-            margin: 40px auto;
+            width: 70vh; height: 70vh; max-width: 90vw; max-height: 90vw;
         }
-        
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
         #compass {
-            width: 100%; height: 100%;
-            border-radius: 50%; cursor: pointer; position: relative;
+            width: 100%; height: 100%; border-radius: 50%; cursor: pointer; position: relative;
             background: conic-gradient(
                 var(--c-red) 0% 5%, var(--c-green) 5% 50%, var(--c-yellow) 50% 65%,
                 var(--c-purple) 65% 80%, var(--c-slate) 80% 90%, var(--c-blue) 90% 100%
             );
-            animation: spin 25s linear infinite;
+            animation: spin 10s linear infinite reverse;
         }
-        
         #compass-center {
-            position: absolute; 
-            width: 34vh; height: 34vh;
-            max-width: 45vw; max-height: 45vw;
-            background: var(--card-bg);
-            border-radius: 50%; display: grid; place-items: center; text-align: center;
-            pointer-events: none; box-shadow: 7px 7px 15px #c8cdd5, -7px -7px 15px #ffffff;
-            transition: background-color 0.3s ease;
+            position: absolute; width: 34vh; height: 34vh; max-width: 45vw; max-height: 45vw;
+            background: var(--card-bg); border-radius: 50%; display: grid; place-items: center; text-align: center;
+            pointer-events: none; box-shadow: 0 0 25px rgba(0,0,0,0.1), 7px 7px 15px var(--shadow-dark), -7px -7px 15px var(--shadow-light);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
         }
-        
         #center-text-hover {
-            color: white; opacity: 0;
-            transition: opacity 0.3s ease; position: absolute;
+            opacity: 1; transition: opacity 0.3s ease; position: absolute;
             display: flex; flex-direction: column; align-items: center;
-            padding: 10px;
+            padding: 10px; color: var(--text-color);
         }
-        
-        #hover-name { font-size: clamp(24px, 5vw, 48px); font-weight: 700; }
-        #hover-percentage { font-size: clamp(16px, 3.5vw, 32px); font-weight: 400; opacity: 0.8; margin-top: 1vh; }
+        #hover-name { font-size: clamp(16px, 2.5vw, 24px); font-weight: 700; }
+        #hover-percentage { font-size: clamp(12px, 2vw, 18px); font-weight: 400; opacity: 0.8; margin-top: 1vh; }
 
-        #assessment-card { display: none; margin-top: 30px; }
-        .assessment-content ul { list-style-type: disc; padding-left: 25px; margin: 10px 0; }
-        .assessment-content h4 { margin: 25px 0 10px 0; color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 5px; }
-        .assessment-content h5 { margin-top: 20px; }
-        .assessment-content strong { color: var(--secondary-color); }
+        .clinical-calculators-module { margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--border-color); }
         
-        /* --- COMMAND: THE FINAL SIGNATURE --- */
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            font-size: 0.9em;
-            color: var(--secondary-color);
-            opacity: 0.8;
+        .pre-assessment-filter { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid var(--border-color); }
+        .pre-assessment-filter h5 { text-align: center; margin-top: 0; margin-bottom: 15px; font-size: 1.1em; }
+        .filter-options { display: flex; gap: 15px; justify-content: center; }
+        .filter-option {
+            display: flex; align-items: center; cursor: pointer; font-size: 0.95em;
+            border: 2px solid var(--border-color); border-radius: 4px; padding: 10px 12px;
+            transition: all 0.3s ease-in-out;
+            flex: 1; max-width: 300px;
+        }
+        .filter-option:hover { border-color: var(--accent-color); }
+        .filter-option.hidden { opacity: 0; transform: scale(0.8); pointer-events: none; }
+        .filter-option .custom-radio {
+            width: 20px; height: 20px; border: 2px solid var(--border-color);
+            border-radius: 50%; margin-right: 12px; flex-shrink: 0;
+            transition: all 0.2s ease-in-out; position: relative;
+        }
+        .filter-option.selected .custom-radio::after {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            width: 10px; height: 10px; border-radius: 50%;
+            transform: translate(-50%, -50%); transition: background-color 0.2s;
+        }
+        .filter-option.selected.filter-option-red .custom-radio { border-color: var(--c-red); }
+        .filter-option.selected.filter-option-red .custom-radio::after { background-color: var(--c-red); }
+        .filter-option.selected.filter-option-green .custom-radio { border-color: var(--c-green); }
+        .filter-option.selected.filter-option-green .custom-radio::after { background-color: var(--c-green); }
+        .filter-option.selected.filter-option-blue .custom-radio { border-color: var(--c-blue); }
+        .filter-option.selected.filter-option-blue .custom-radio::after { background-color: var(--c-blue); }
+        
+        .filter-option.selected span { font-weight: 600; }
+        .filter-option-red span { color: var(--c-red); }
+        .filter-option-green span { color: var(--c-green); }
+        #filter-message { text-align: center; margin-top: 15px; font-style: italic; opacity: 0.9; }
+
+        .calculator-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; transition: opacity 0.3s ease; }
+        .calculator-grid.grid-gated { opacity: 0.4; pointer-events: none; }
+        .calculator { display: flex; flex-direction: column; transition: opacity 0.3s ease; }
+        .calculator.calculator-disabled, .calculator.calculator-gated { opacity: 0.4; pointer-events: none; }
+        .calculator-criteria { flex-grow: 1; }
+        .criteria-group { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+        
+        .custom-checkbox-label {
+            display: flex; align-items: center; cursor: pointer; font-size: 0.95em;
+            border: 2px solid var(--border-color); border-radius: 4px; padding: 10px 12px;
+            transition: all 0.2s ease-in-out;
+        }
+        .custom-checkbox-label:hover:not(.locked) { border-color: var(--accent-color); }
+        .custom-checkbox-label.locked { cursor: not-allowed; opacity: 0.7; }
+        .custom-checkbox-label input[type="checkbox"] { display: none; }
+        .custom-checkbox {
+            width: 20px; height: 20px; border: 2px solid var(--border-color);
+            border-radius: 4px; margin-right: 12px; display: flex;
+            align-items: center; justify-content: center; flex-shrink: 0;
+            transition: all 0.2s ease-in-out;
+        }
+        .custom-checkbox-label input[type="checkbox"]:checked + .custom-checkbox {
+            background-color: var(--accent-color); border-color: var(--accent-color);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+            background-size: 80%; background-repeat: no-repeat; background-position: center;
+        }
+        .custom-checkbox-label input[type="checkbox"]:checked ~ span:not(.custom-checkbox) { font-weight: 600; }
+
+        .age-input-row {
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 0.95em; border: 2px solid var(--border-color);
+            border-radius: 4px; padding: 6px 12px; transition: border-color 0.2s ease;
+        }
+        .age-input-row:focus-within { border-color: var(--accent-color); }
+        .age-input-wrapper { display: flex; align-items: center; }
+        .age-input-wrapper input[type="number"] {
+            border: none; background-color: transparent; color: var(--text-color);
+            width: 40px; font-size: 1em; text-align: center; outline: none; font-weight: 600;
+        }
+        .age-input-wrapper input[type="number"]::-webkit-inner-spin-button,
+        .age-input-wrapper input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .age-input-wrapper input[type="number"] { -moz-appearance: textfield; }
+        .age-input-wrapper span { font-weight: 600; color: var(--accent-color); font-size: 0.9em; margin-left: 8px; }
+        .error-message { color: var(--c-red); font-size: 0.8em; margin-top: 8px; text-align: center; display: none; }
+        .calculator-note { font-size: 0.8em; font-style: italic; opacity: 0.8; text-align: center; margin-top: -10px; margin-bottom: 10px; }
+
+        .calculator-result { padding-top: 15px; border-top: 2px solid var(--border-color); }
+        .calculator-result strong { font-size: 1.2em; }
+        
+        .synthesis-container { margin-top: 30px; }
+        .synthesis-section {
+            padding: 20px; border: 2px solid var(--border-color);
+            border-radius: 10px; margin-bottom: 20px;
+        }
+        .synthesis-section.hidden { display: none; }
+        .synthesis-section h5 { margin-top: 0; }
+        .synthesis-section p { margin-bottom: 0; }
+        .pearl-trigger {
+            cursor: pointer; color: var(--accent-color); font-size: 0.9em;
+            margin-top: 10px; display: inline-block; font-weight: 600;
+            border-bottom: 1px dashed var(--accent-color);
+        }
+        .clinical-pearl {
+            font-size: 0.9em; opacity: 0.9;
+            overflow: hidden; max-height: 0; opacity: 0;
+            transition: max-height 0.4s ease-out, opacity 0.4s ease-out, margin-top 0.4s ease-out, padding-top 0.4s ease-out;
+            margin-top: 0; padding-top: 0; border-top: none;
+        }
+        .clinical-pearl.visible {
+            max-height: 200px; opacity: 1;
+            margin-top: 15px; padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        @media (max-width: 900px) {
+            body { padding: 10px; }
+            .main-container { flex-direction: column; gap: 20px; }
+            .compass-section { position: static; width: 100%; }
+            .compass-container { width: 80vw; height: 80vw; margin-bottom: 20px; }
+            #compass-center { width: 40vw; height: 40vw; }
+            .calculator-grid { grid-template-columns: 1fr; }
+            .filter-options { flex-direction: column; align-items: center; }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="dashboard-card" id="triage-card">
-        <div class="compass-container" id="compass-wrapper">
-            <div id="compass"></div>
-            <div id="compass-center">
-                <div id="center-text-hover">
-                    <span id="hover-name"></span>
-                    <span id="hover-percentage"></span>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="dashboard-card" id="assessment-card"></div>
-    
-    <footer class="footer">
-        <p>Developed by: Erfan Alinejad Ghadi, MD & Fatemeh Babapour, BSc.</p>
-    </footer>
+<div class="header">
+    <button id="print-button" class="icon-button" title="Print Summary"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg></button>
+    <button id="theme-toggle" class="icon-button" title="Toggle dark/light mode"><svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 9c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 4c-.552 0-1-.448-1-1s.448-1 1-1 1 .448 1 1-.448 1-1 1zm0-8c.553 0 1-.448 1-1V2c0-.552-.447-1-1-1s-1 .448-1 1v2c0 .552.447 1 1 1zm-6.364 2.636c.39.39 1.024.39 1.414 0 .39-.39.39-1.024 0-1.414L4.929 4.929c-.39-.39-1.024-.39-1.414 0-.39.39-.39 1.024 0 1.414l2.121 2.121zM2 12c0 .552.448 1 1 1h2c.552 0 1-.448 1-1s-.448-1-1-1H3c-.552 0-1 .448-1 1zm2.929 6.929l-2.121 2.121c-.39.39-.39 1.024 0 1.414.39.39 1.024.39 1.414 0l2.121-2.121c.39-.39.39-1.024 0-1.414-.39-.39-1.024-.39-1.414 0zM12 20c-.553 0-1 .448-1 1v2c0 .552.447 1 1 1s1-.448 1-1v-2c0-.552-.447-1-1-1zm6.364-2.636c-.39-.39-1.024-.39-1.414 0-.39.39.39 1.024 0 1.414l2.121 2.121c.39.39 1.024.39 1.414 0 .39-.39.39-1.024 0-1.414l-2.121-2.121zM22 12c0-.552-.448-1-1-1h-2c-.552 0-1 .448-1 1s.448 1 1 1h2c.552 0 1-.448 1-1zm-2.929-6.929l2.121-2.121c.39-.39.39-1.024 0-1.414-.39-.39-1.024-.39-1.414 0l-2.121 2.121c-.39.39-.39 1.024 0 1.414.39.39 1.024.39 1.414 0z"/></svg><svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12.001.001C5.373.001 0 5.374 0 12.001c0 6.627 5.373 12 12.001 12 6.627 0 12-5.373 12-12 0-6.627-5.373-12-12-12zm0 21.999c-5.514 0-10-4.486-10-10s4.486-10 10-10c.323 0 .642.02.956.058C8.01 3.33 4.001 7.71 4.001 12.999c0 5.514 4.486 10 10 10 3.39 0 6.393-1.688 8.24-4.285-.52.03-1.043.047-1.57.047-4.237 0-7.834-2.688-9.42-6.358C10.999 17.062 12.001 22 12.001 22z"/></svg></button>
+</div>
+
+<div class="main-container">
+    <div class="compass-section">
+        <div id="compass-wrapper" class="compass-container">
+            <div id="compass"></div>
+            <div id="compass-center"><div id="center-text-hover"><span id="hover-name"></span><span id="hover-percentage"></span></div></div>
+        </div>
+        <div class="credits-footer">Developed by: Erfan Alinejad Ghadi, MD & Fatemeh Babapour, BSc.</div>
+    </div>
+    <div class="assessment-section">
+        <div id="assessment-card" class="dashboard-card"></div>
+    </div>
 </div>
 
 <script>
-    const assessmentCard = document.getElementById('assessment-card');
+    const ddxContent = {
+        redFlags: `<div class="card-header"><h3 style="color: var(--c-red);">Red Flags: Urgent Airway & Deep Infection Assessment</h3></div>
+                   <div class="assessment-content">
+                       <h4>Signs of Upper Airway Obstruction</h4>
+                       <ul>
+                           <li><strong>Dysphonia:</strong> Muffled ("hot potato") voice or significant hoarseness.</li>
+                           <li><strong>Sialorrhea:</strong> Inability to swallow saliva, leading to drooling.</li>
+                           <li><strong>Stridor:</strong> High-pitched inspiratory sound indicating critical airway narrowing.</li>
+                           <li><strong>Respiratory Distress:</strong> Tachypnea, dyspnea, or use of accessory muscles (retractions).</li>
+                           <li><strong>Compensatory Posturing:</strong> "Tripod" or "sniffing" position.</li>
+                       </ul>
+                       <h4>Features of Deep Neck Space Infections</h4>
+                       <ul>
+                           <li><strong>Severe Unilateral Odynophagia:</strong> Painful swallowing localized to one side.</li>
+                           <li><strong>Oropharyngeal Asymmetry:</strong> Bulging of the soft palate or pharyngeal wall.</li>
+                           <li><strong>Cervical Signs:</strong> Neck swelling, tenderness, crepitus, or nuchal rigidity.</li>
+                           <li><strong>Trismus:</strong> Inability to open the jaw due to masseter muscle spasm.</li>
+                           <li><strong>Systemic Toxicity:</strong> High fever, rigors, and a toxic appearance.</li>
+                       </ul>
+                       <h4>Clinical Features of Specific Syndromes</h4>
+                       <ul>
+                           <li><strong>Peritonsillar Abscess (Quinsy):</strong> Classic triad of fever, unilateral odynophagia, and trismus, often with uvular deviation.</li>
+                           <li><strong>Ludwig's Angina:</strong> Rapidly progressive cellulitis of the submandibular space, causing floor of mouth elevation and woody induration.</li>
+                           <li><strong>Lemierre Syndrome:</strong> Septic thrombophlebitis of the internal jugular vein, suspect in a patient with worsening pharyngitis despite antibiotics and potential septic pulmonary emboli.</li>
+                           <li><strong>Epiglottitis:</strong> Severe odynophagia out of proportion to oropharyngeal exam findings.</li>
+                       </ul>
+                   </div>`,
+        viral: `<div class="card-header"><h3 style="color: var(--c-green);">Typical Viral Pharyngitis</h3></div>
+                <div class="assessment-content">
+                    <h4>Typical Viral Pharyngitis Profile</h4>
+                    <h4>General Clinical Clues</h4>
+                    <p>Gradual onset, Cough, Coryza, Conjunctivitis, Hoarseness, Oral ulcers, low-grade fever.</p>
+                    <h4>Key Viral Syndromes & Distinguishing Features</h4>
+                    <ul>
+                        <li><strong>Influenza:</strong> Characterized by prominent systemic symptoms (abrupt high fever, myalgia, headache) that often overshadow the sore throat. Follows a seasonal pattern.</li>
+                        <li><strong>Adenovirus:</strong> Often presents as the classic triad of Pharyngoconjunctival Fever (pharyngitis, conjunctivitis, fever). Tonsillar exudates can be present, mimicking GAS.</li>
+                        <li><strong>Enterovirus (Coxsackie A):</strong> Identified by characteristic vesicular or ulcerative lesions (Herpangina) on the posterior oropharynx and soft palate. May be associated with Hand, Foot, and Mouth Disease.</li>
+                        <li><strong>Herpes Simplex Virus (HSV):</strong> Typically causes a severe primary herpetic gingivostomatitis with high fever, odynophagia, and vesicular lesions on the lips, palate, and gingiva, most common in young adults.</li>
+                        <li><strong>SARS-CoV-2:</strong> A highly variable presentation where pharyngitis can be a primary symptom. Diagnosis often relies on associated features (cough, dyspnea, anosmia) and a history of epidemiologic exposure.</li>
+                    </ul>
+                    <h4>Viruses with Nasopharyngitis Dominance (Common Cold)</h4>
+                    <p>Includes Rhinovirus, seasonal Coronaviruses, RSV, and Parainfluenza virus. In these infections, nasal symptoms (coryza, congestion) typically predominate, and the pharyngitis is often a milder, secondary complaint. Parainfluenza is notably associated with croup in children.</p>
+                </div>`,
+        bacterial: `<div class="card-header"><h3 style="color: var(--c-yellow);">Bacterial Pharyngitis (GAS)</h3></div>
+                    <div class="clinical-calculators-module" style="margin-top:0; padding-top:0; border-top:none;">
+                        <div class="pre-assessment-filter">
+                            <h5>Initial Clinical Triage</h5>
+                            <div class="filter-options">
+                                <div class="filter-option filter-option-red" data-filter="redflag">
+                                    <span class="custom-radio"></span>
+                                    <span>Red Flag</span>
+                                </div>
+                                <div class="filter-option filter-option-green" data-filter="viral">
+                                    <span class="custom-radio"></span>
+                                    <span>Typical (Non-Mono) Viral Pharyngitis</span>
+                                </div>
+                                <div class="filter-option filter-option-blue selected" data-filter="proceed">
+                                    <span class="custom-radio"></span>
+                                    <span>Bacterial Cause Suspected</span>
+                                </div>
+                            </div>
+                            <p id="filter-message"></p>
+                        </div>
+                        <div id="calculator-grid" class="calculator-grid">
+                            <div id="feverpain-calculator" class="calculator">
+                                <div class="calculator-criteria">
+                                    <h5>FeverPAIN Score</h5>
+                                    <p class="calculator-note">Initial Assessment</p>
+                                    <div class="criteria-group">
+                                        <label class="custom-checkbox-label"><input type="checkbox" id="fp-fever" class="feverpain-check"><span class="custom-checkbox"></span><span><strong>F</strong>ever (in last 24h)</span></label>
+                                        <label class="custom-checkbox-label"><input type="checkbox" id="fp-purulence" class="feverpain-check"><span class="custom-checkbox"></span><span><strong>P</strong>urulence (exudate)</span></label>
+                                        <label class="custom-checkbox-label"><input type="checkbox" id="fp-attended" class="feverpain-check"><span class="custom-checkbox"></span><span><strong>A</strong>ttended rapidly (≤3 days)</span></label>
+                                        <label class="custom-checkbox-label"><input type="checkbox" id="fp-inflamed" class="feverpain-check"><span class="custom-checkbox"></span><span>Severely <strong>I</strong>nflamed tonsils</span></label>
+                                        <label class="custom-checkbox-label"><input type="checkbox" id="fp-nocough" class="feverpain-check"><span class="custom-checkbox"></span><span><strong>N</strong>o cough or coryza</span></label>
+                                    </div>
+                                </div>
+                                <div class="calculator-result">
+                                    <strong>Score: <span id="feverpain-score-value">0</span></strong>
+                                    <p id="feverpain-interpretation">Risk of Strep: ~10-13%</p>
+                                </div>
+                            </div>
+                            <div id="mcisaac-calculator" class="calculator">
+                                <div class="calculator-criteria">
+                                    <h5>McIsaac Score</h5>
+                                    <p class="calculator-note">Refined Assessment (if onset ≤3 days)</p>
+                                    <div class="criteria-group">
+                                        <label class="custom-checkbox-label"><input type="checkbox" id="mc-fever" class="mcisaac-check"><span class="custom-checkbox"></span><span>History of Fever (+1)</span></label>
+                                        <label class="custom-checkbox-label locked"><input type="checkbox" id="mc-exudates" class="mcisaac-check" disabled><span class="custom-checkbox"></span><span>Exudate or swelling on tonsils (+1)</span></label>
+                                        <label class="custom-checkbox-label"><input type="checkbox" class="mcisaac-check"><span class="custom-checkbox"></span><span>Tender/swollen anterior cervical nodes (+1)</span></label>
+                                        <label class="age-input-row" for="patient-age-input">
+                                            <span>Patient Age:</span>
+                                            <div class="age-input-wrapper">
+                                                <input type="number" id="patient-age-input" class="mcisaac-check" value="30" min="1">
+                                                <span id="age-points-display">(+0)</span>
+                                            </div>
+                                        </label>
+                                        <label class="custom-checkbox-label"><input type="checkbox" id="mc-nocough" class="mcisaac-check"><span class="custom-checkbox"></span><span>Absence of Cough (+1)</span></label>
+                                        <div id="age-error-message" class="error-message"></div>
+                                    </div>
+                                </div>
+                                <div class="calculator-result">
+                                    <strong>Score: <span id="mcisaac-score-value">0</span></strong>
+                                    <p id="mcisaac-interpretation">Risk of Strep: ~1-2.5%</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="synthesis-container">
+                            <div class="synthesis-section hidden" id="feverpain-synthesis"></div>
+                            <div class="synthesis-section" id="mcisaac-synthesis"></div>
+                        </div>
+                    </div>
+                    <div class="assessment-content" style="border-top: 2px solid var(--border-color); margin-top: 30px; padding-top: 20px;">
+                        <h4>Bacterial Pharyngitis: Etiology & Clinical Clues</h4>
+                        <h4>Group A Streptococcus (GAS) - The Archetype</h4>
+                        <p><strong>Classic Presentation:</strong> A constellation of acute onset fever, tonsillar exudates, tender anterior cervical adenopathy, and absence of cough. Associated symptoms may include headache and abdominal pain.</p>
+                        <h4>The GAS Mimics & Scarlatiniform Eruptions</h4>
+                        <ul>
+                            <li><strong>Streptococcus Groups C & G:</strong> Clinically indistinguishable from GAS, can also cause a scarlatiniform rash.</li>
+                            <li><strong>Arcanobacterium haemolyticum:</strong> More common in adolescents, often associated with a scarlatiniform rash.</li>
+                        </ul>
+                        <h4>Diagnosis Driven by Exposure & History</h4>
+                        <ul>
+                            <li><strong>Neisseria gonorrhoeae:</strong> Consider in sexually active individuals with a history of oral-genital contact.</li>
+                            <li><strong>Corynebacterium diphtheriae:</strong> Hallmark is a gray, firmly adherent pseudomembrane. Suspect with relevant travel history or incomplete immunization.</li>
+                            <li><strong>Francisella tularensis (Tularemia):</strong> Associated with exposure to wild game or contaminated water sources; may present with ulcerative-exudative pharyngitis.</li>
+                        </ul>
+                        <h4>The Anaerobic Threat: Fusobacterium necrophorum</h4>
+                        <p>A cause of severe, persistent, or worsening pharyngitis, particularly in adolescents. Strongly associated with Lemierre Syndrome (septic thrombophlebitis of the internal jugular vein), a critical red flag diagnosis.</p>
+                        <h4>Atypical Pathogens</h4>
+                        <p><strong>Mycoplasma pneumoniae:</strong> Pharyngitis is often a component of a broader respiratory illness, including bronchitis or atypical pneumonia, rather than an isolated finding.</p>
+                    </div>`,
+        mono: `<div class="card-header"><h3 style="color: var(--c-purple);">Mono-like Syndromes (EBV)</h3></div>
+               <div class="assessment-content">
+                   <h4>Diagnosis & Presentation</h4>
+                   <p>Characterized by fever, pharyngitis, and lymphadenopathy, with profound fatigue. Hallmark is <strong>posterior cervical lymphadenopathy</strong>.</p>
+                   <h4>Workup & Rule Out</h4>
+                   <ul>
+                       <li><strong>Initial Test:</strong> Monospot test.</li>
+                       <li><strong>CRITICAL Rule Out:</strong> <strong>Primary HIV infection</strong>.</li>
+                   </ul>
+                   <h4>Prognosis & Clinical Pearls</h4>
+                   <ul>
+                       <li><strong>CRITICAL PEARL:</strong> <strong>AVOID Amoxicillin/Ampicillin</strong> (causes rash).</li>
+                       <li><strong>Patient Counseling:</strong> Avoid contact sports due to risk of <strong>splenic rupture</strong>.</li>
+                   </ul>
+               </div>`,
+        systemic: `<div class="card-header"><h3 style="color: var(--c-slate);">Systemic & Atypical Causes</h3></div>
+                   <div class="assessment-content">
+                       <h4>Inflammatory & Vasculitic Syndromes</h4>
+                       <ul>
+                           <li><strong>Kawasaki Disease:</strong> A pediatric emergency. Suspect with fever >5 days plus signs like conjunctivitis, rash, extremity changes, and prominent cervical adenopathy. The pharyngitis is part of a broader mucosal inflammation ("strawberry tongue").</li>
+                           <li><strong>PFAPA Syndrome:</strong> Characterized by Periodic Fever, Aphthous stomatitis, Pharyngitis, and cervical Adenitis. The key is the predictable, cyclical nature of the episodes.</li>
+                       </ul>
+                       <h4>Hematologic & Oncologic Emergencies</h4>
+                       <ul>
+                           <li><strong>Leukemia/Lymphoma:</strong> Pharyngitis can be a presenting sign of neutropenic mucositis in a patient with an undiagnosed malignancy. Suspect with associated systemic symptoms (night sweats, weight loss, persistent fever).</li>
+                           <li><strong>Agranulocytosis:</strong> Often drug-induced. Presents as severe, sometimes necrotic, pharyngitis in the context of a severely suppressed white blood cell count.</li>
+                       </ul>
+                       <h4>Referred & Neuropathic Pain</h4>
+                       <ul>
+                           <li><strong>Cardiac Ischemia (Angina/MI):</strong> A critical red flag. Throat pain can be a manifestation of referred cardiac pain. Suspect if the pain is exertional and associated with other cardiac symptoms (dyspnea, diaphoresis).</li>
+                           <li><strong>Thyroiditis:</strong> Pain is localized over the thyroid gland and is associated with tenderness on palpation.</li>
+                           <li><strong>Glossopharyngeal Neuralgia:</strong> Presents as sharp, paroxysmal, lancinating unilateral pain, often triggered by swallowing.</li>
+                       </ul>
+                   </div>`,
+        nonInfectious: `<div class="card-header"><h3 style="color: var(--c-blue);">Non-Infectious Causes</h3></div>
+                        <div class="assessment-content">
+                            <h4>Diagnosis & Presentation</h4>
+                            <p>Caused by irritation rather than infection. Often chronic.</p>
+                            <ul>
+                                <li><strong>Laryngopharyngeal Reflux (LPR):</strong> Chronic throat clearing, sore throat worse in the morning.</li>
+                                <li><strong>Neoplasm:</strong> A persistent, unilateral sore throat, especially with smoking/alcohol history, is a major red flag.</li>
+                            </ul>
+                        </div>`
+    };
+
     const compassWrapper = document.getElementById('compass-wrapper');
     const compass = document.getElementById('compass');
     const compassCenter = document.getElementById('compass-center');
-    const textHover = document.getElementById('center-text-hover');
     const hoverName = document.getElementById('hover-name');
     const hoverPercentage = document.getElementById('hover-percentage');
+    const assessmentCard = document.getElementById('assessment-card');
+    const themeToggle = document.getElementById('theme-toggle');
+    const printButton = document.getElementById('print-button');
+    const body = document.body;
 
     const segments = [
         { id: 'redFlags', name: 'Red Flags', start: 0, end: 5, color: 'var(--c-red)', percentage: 5 },
-        { id: 'viral', name: 'Typical Viral', start: 5, end: 50, color: 'var(--c-green)', percentage: 45 },
+        { id: 'viral', name: 'Viral', start: 5, end: 50, color: 'var(--c-green)', percentage: 45 },
         { id: 'bacterial', name: 'Bacterial', start: 50, end: 65, color: 'var(--c-yellow)', percentage: 15 },
         { id: 'mono', name: 'Mono Syndromes', start: 65, end: 80, color: 'var(--c-purple)', percentage: 15 },
         { id: 'systemic', name: 'Systemic & Atypical', start: 80, end: 90, color: 'var(--c-slate)', percentage: 10 },
         { id: 'nonInfectious', name: 'Non-Infectious', start: 90, end: 100, color: 'var(--c-blue)', percentage: 10 }
     ];
-
-    const ddxContent = {
-        redFlags: `<div class="card-header"><h3 style="color: var(--c-red);">Red Flags: Urgent Airway & Deep Infection Assessment</h3></div><div class="assessment-content"><h4>Signs of Upper Airway Obstruction</h4><ul><li><strong>Dysphonia:</strong> Muffled ("hot potato") voice or significant hoarseness.</li><li><strong>Sialorrhea:</strong> Inability to swallow saliva, leading to drooling.</li><li><strong>Stridor:</strong> High-pitched inspiratory sound indicating critical airway narrowing.</li><li><strong>Respiratory Distress:</strong> Tachypnea, dyspnea, or use of accessory muscles (retractions).</li><li><strong>Compensatory Posturing:</strong> "Tripod" or "sniffing" position.</li></ul><h4>Features of Deep Neck Space Infections</h4><ul><li><strong>Severe Unilateral Odynophagia:</strong> Painful swallowing localized to one side.</li><li><strong>Oropharyngeal Asymmetry:</strong> Bulging of the soft palate or pharyngeal wall.</li><li><strong>Cervical Signs:</strong> Neck swelling, tenderness, crepitus, or nuchal rigidity.</li><li><strong>Trismus:</strong> Inability to open the jaw due to masseter muscle spasm.</li><li><strong>Systemic Toxicity:</strong> High fever, rigors, and a toxic appearance.</li></ul><h4>Clinical Features of Specific Syndromes</h4><ul><li><strong>Peritonsillar Abscess (Quinsy):</strong> Classic triad of fever, unilateral odynophagia, and trismus, often with uvular deviation.</li><li><strong>Ludwig's Angina:</strong> Rapidly progressive cellulitis of the submandibular space, causing floor of mouth elevation and woody induration.</li><li><strong>Lemierre Syndrome:</strong> Septic thrombophlebitis of the internal jugular vein, suspect in a patient with worsening pharyngitis despite antibiotics and potential septic pulmonary emboli.</li><li><strong>Epiglottitis:</strong> Severe odynophagia out of proportion to oropharyngeal exam findings.</li></ul></div>`,
-        bacterial: `<div class="card-header"><h3 style="color: var(--c-yellow);">Bacterial Pharyngitis: Etiology & Clinical Clues</h3></div><div class="assessment-content"><h4>Group A Streptococcus (GAS) - The Archetype</h4><ul><li><strong>Classic Presentation:</strong> A constellation of acute onset fever, tonsillar exudates, tender anterior cervical adenopathy, and absence of cough. Associated symptoms may include headache and abdominal pain.</li></ul><h4>The GAS Mimics & Scarlatiniform Eruptions</h4><ul><li><strong>Streptococcus Groups C & G:</strong> Clinically indistinguishable from GAS, can also cause a scarlatiniform rash.</li><li><strong>Arcanobacterium haemolyticum:</strong> More common in adolescents, often associated with a scarlatiniform rash.</li></ul><h4>Diagnosis Driven by Exposure & History</h4><ul><li><strong>Neisseria gonorrhoeae:</strong> Consider in sexually active individuals with a history of oral-genital contact.</li><li><strong>Corynebacterium diphtheriae:</strong> Hallmark is a gray, firmly adherent pseudomembrane. Suspect with relevant travel history or incomplete immunization.</li><li><strong>Francisella tularensis (Tularemia):</strong> Associated with exposure to wild game or contaminated water sources; may present with ulcerative-exudative pharyngitis.</li></ul><h4>The Anaerobic Threat: Fusobacterium necrophorum</h4><ul><li>A cause of severe, persistent, or worsening pharyngitis, particularly in adolescents. Strongly associated with <strong>Lemierre Syndrome</strong> (septic thrombophlebitis of the internal jugular vein), a critical red flag diagnosis.</li></ul><h4>Atypical Pathogens</h4><ul><li><strong>Mycoplasma pneumoniae:</strong> Pharyngitis is often a component of a broader respiratory illness, including bronchitis or atypical pneumonia, rather than an isolated finding.</li></ul></div>`,
-        // --- COMMAND: KNOWLEDGE COMPLETION ---
-        mono: `
-            <div class="card-header"><h3 style="color: var(--c-purple);">Mono-Like Syndromes: Differential Diagnosis</h3></div>
-            <div class="assessment-content">
-                <h4>General Clinical Constellation</h4>
-                <ul><li>Characterized by the triad of fever, pharyngitis, and lymphadenopathy, often accompanied by profound fatigue (malaise) and sometimes splenomegaly.</li></ul>
-                
-                <h4>Etiologies & Distinguishing Features</h4>
-                <ul>
-                    <li><strong>Epstein-Barr Virus (EBV):</strong> The classic cause of infectious mononucleosis. Hallmark is prominent <strong>posterior cervical lymphadenopathy</strong>. Pharyngitis is often severely exudative. The diagnosis is supported by a positive heterophile antibody test (Monospot).</li>
-                    <li><strong>Cytomegalovirus (CMV):</strong> A common cause of heterophile-negative mononucleosis. Pharyngitis and lymphadenopathy are typically less severe than in EBV. More common in adults.</li>
-                    <li><strong>Primary HIV Infection (Acute Retroviral Syndrome):</strong> A critical "can't-miss" mimic of mononucleosis. Suspect in patients with risk factors. The presence of a <strong>maculopapular rash</strong> or <strong>mucocutaneous ulcers</strong> are important distinguishing clues.</li>
-                </ul>
-            </div>`,
-        systemic: `
-            <div class="card-header"><h3 style="color: var(--c-slate);">Systemic & Atypical Causes of Pharyngitis</h3></div>
-            <div class="assessment-content">
-                <h4>Inflammatory & Vasculitic Syndromes</h4>
-                <ul>
-                    <li><strong>Kawasaki Disease:</strong> A pediatric emergency. Suspect with fever >5 days plus signs like conjunctivitis, rash, extremity changes, and prominent cervical adenopathy. The pharyngitis is part of a broader mucosal inflammation ("strawberry tongue").</li>
-                    <li><strong>PFAPA Syndrome:</strong> Characterized by <strong>P</strong>eriodic <strong>F</strong>ever, <strong>A</strong>phthous stomatitis, <strong>P</strong>haryngitis, and cervical <strong>A</strong>denitis. The key is the predictable, cyclical nature of the episodes.</li>
-                </ul>
-
-                <h4>Hematologic & Oncologic Emergencies</h4>
-                <ul>
-                    <li><strong>Leukemia/Lymphoma:</strong> Pharyngitis can be a presenting sign of neutropenic mucositis in a patient with an undiagnosed malignancy. Suspect with associated systemic symptoms (night sweats, weight loss, persistent fever).</li>
-                    <li><strong>Agranulocytosis:</strong> Often drug-induced. Presents as severe, sometimes necrotic, pharyngitis in the context of a severely suppressed white blood cell count.</li>
-                </ul>
-
-                <h4>Referred & Neuropathic Pain</h4>
-                <ul>
-                    <li><strong>Cardiac Ischemia (Angina/MI):</strong> A critical red flag. Throat pain can be a manifestation of referred cardiac pain. Suspect if the pain is exertional and associated with other cardiac symptoms (dyspnea, diaphoresis).</li>
-                    <li><strong>Thyroiditis:</strong> Pain is localized over the thyroid gland and is associated with tenderness on palpation.</li>
-                    <li><strong>Glossopharyngeal Neuralgia:</strong> Presents as sharp, paroxysmal, lancinating unilateral pain, often triggered by swallowing.</li>
-                </ul>
-            </div>`,
-        viral: `<div class="card-header"><h3 style="color: var(--c-green);">Typical Viral Pharyngitis Profile</h3></div><div class="assessment-content"><h4>General Clinical Clues</h4><ul><li>Gradual onset, Cough, Coryza, Conjunctivitis, Hoarseness, Oral ulcers, low-grade fever.</li></ul><h4>Key Viral Syndromes & Distinguishing Features</h4><ul><li><strong>Influenza:</strong> Characterized by prominent systemic symptoms (abrupt high fever, myalgia, headache) that often overshadow the sore throat. Follows a seasonal pattern.</li><li><strong>Adenovirus:</strong> Often presents as the classic triad of Pharyngoconjunctival Fever (pharyngitis, conjunctivitis, fever). Tonsillar exudates can be present, mimicking GAS.</li><li><strong>Enterovirus (Coxsackie A):</strong> Identified by characteristic vesicular or ulcerative lesions (Herpangina) on the posterior oropharynx and soft palate. May be associated with Hand, Foot, and Mouth Disease.</li><li><strong>Herpes Simplex Virus (HSV):</strong> Typically causes a severe primary herpetic gingivostomatitis with high fever, odynophagia, and vesicular lesions on the lips, palate, and gingiva, most common in young adults.</li><li><strong>SARS-CoV-2:</strong> A highly variable presentation where pharyngitis can be a primary symptom. Diagnosis often relies on associated features (cough, dyspnea, anosmia) and a history of epidemiologic exposure.</li></ul><h4>Viruses with Nasopharyngitis Dominance (Common Cold)</h4><ul><li>Includes <strong>Rhinovirus, seasonal Coronaviruses, RSV, and Parainfluenza virus</strong>.</li><li>In these infections, nasal symptoms (coryza, congestion) typically predominate, and the pharyngitis is often a milder, secondary complaint. Parainfluenza is notably associated with croup in children.</li></ul></div>`,
-        nonInfectious: `
-            <div class="card-header"><h3 style="color: var(--c-blue);">Non-Infectious Pharyngitis Profile</h3></div>
-            <div class="assessment-content">
-                <h4>Irritation from Above & Below</h4>
-                <ul>
-                    <li><strong>Laryngopharyngeal Reflux (LPR):</strong> Gastric acid irritates the pharynx. Classic symptoms include chronic throat clearing, globus sensation (lump in the throat), and a sore throat that is often worse in the morning.</li>
-                    <li><strong>Post-nasal Drip Syndrome:</strong> Chronic drainage from the sinuses irritates the pharynx. Often associated with allergic or vasomotor rhinitis. A "cobblestone" appearance of the posterior pharyngeal wall is a common sign.</li>
-                </ul>
-                
-                <h4>Direct Irritation & Trauma</h4>
-                <ul>
-                    <li><strong>Environmental/Occupational Irritants:</strong> Exposure to smoke, chemicals, or dry air.</li>
-                    <li><strong>Vocal Strain:</strong> Overuse or improper use of the voice.</li>
-                </ul>
-
-                <h4>Neoplasm - A Critical Consideration</h4>
-                <ul>
-                    <li>A persistent, localized, or unilateral sore throat, especially in a patient with risk factors (smoking, alcohol use), should raise suspicion for malignancy.</li>
-                    <li><strong>Associated Red Flags:</strong> Unilateral odynophagia, referred otalgia (ear pain), dysphagia, weight loss, or a palpable neck mass.</li>
-                </ul>
-            </div>`
-    };
-
+    let currentSegment = null;
+    
     function getAngle(event) {
         const rect = compassWrapper.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
-        const angleRad = Math.atan2(event.clientY - centerY, event.clientX - centerX);
+        const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+        const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+        const angleRad = Math.atan2(clientY - centerY, clientX - centerX);
         let angleDeg = angleRad * 180 / Math.PI;
         
         const computedStyle = window.getComputedStyle(compass);
@@ -205,42 +459,269 @@
         return segments.find(s => percentage >= s.start && percentage < s.end);
     }
 
-    function setState(segment) {
-        compassCenter.style.backgroundColor = segment.color;
+    function updateCompassCenter(segment) {
+        if (!segment) return;
+        compassCenter.style.backgroundColor = getComputedStyle(body).getPropertyValue(segment.color.slice(4, -1));
         hoverName.textContent = segment.name;
-        hoverPercentage.textContent = `${segment.percentage}%`;
-        textHover.style.opacity = '1';
-        assessmentCard.innerHTML = ddxContent[segment.id];
-        assessmentCard.style.display = 'block';
+        hoverPercentage.textContent = `~${segment.percentage}%`;
     }
 
-    compassWrapper.addEventListener('mousemove', (e) => {
-        const angle = getAngle(e);
-        const segment = getSegmentFromAngle(angle);
-        if (segment) {
-            compassCenter.style.backgroundColor = segment.color;
-            hoverName.textContent = segment.name;
-            hoverPercentage.textContent = `${segment.percentage}%`;
+    function setContent(segment) {
+        if (!segment) return;
+        currentSegment = segment;
+        assessmentCard.innerHTML = ddxContent[segment.id];
+        updateCompassCenter(segment);
+        
+        if (segment.id === 'bacterial') {
+            initializeCalculators();
         }
-    });
-
-    compassWrapper.addEventListener('mouseleave', () => {
-        setState(segments[0]);
-    });
-
-    compassWrapper.addEventListener('click', (e) => {
-        const angle = getAngle(e);
-        const segment = getSegmentFromAngle(angle);
-        if (segment) {
-            setState(segment);
-            assessmentCard.scrollIntoView({ behavior: 'smooth' });
-        }
-    });
-
+    }
+    
     document.addEventListener('DOMContentLoaded', () => {
-        setState(segments[0]);
+        // Theme management
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
+            if (currentSegment) updateCompassCenter(currentSegment);
+        });
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+            body.classList.add('dark-mode');
+        }
+
+        // Print functionality
+        printButton.addEventListener('click', () => { window.print(); });
+
+        // Compass functionality
+        compassWrapper.addEventListener('mousemove', (e) => { 
+            const angle = getAngle(e); 
+            const segment = getSegmentFromAngle(angle); 
+            if (segment) updateCompassCenter(segment); 
+        });
+        compassWrapper.addEventListener('mouseleave', () => { 
+            if (currentSegment) updateCompassCenter(currentSegment); 
+        });
+        compassWrapper.addEventListener('click', (e) => { 
+            const angle = getAngle(e); 
+            const segment = getSegmentFromAngle(angle); 
+            if (segment) { 
+                setContent(segment); 
+                if (window.innerWidth <= 900) { 
+                    assessmentCard.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
+                } 
+            } 
+        });
+
+        // Set initial content
+        setContent(segments[0]);
     });
 
+    function initializeCalculators() {
+        let currentMcIsaacScore = 0;
+        let currentFeverPAINScore = 0;
+
+        const mcisaacCalc = document.getElementById('mcisaac-calculator');
+        const attendedCheckbox = document.getElementById('fp-attended');
+        const feverpainChecks = document.querySelectorAll('.feverpain-check');
+        const mcisaacChecks = document.querySelectorAll('.mcisaac-check');
+        
+        const fpFever = document.getElementById('fp-fever');
+        const fpPurulence = document.getElementById('fp-purulence');
+        const fpInflamed = document.getElementById('fp-inflamed');
+        const fpNocough = document.getElementById('fp-nocough');
+        
+        const mcFever = document.getElementById('mc-fever');
+        const mcExudates = document.getElementById('mc-exudates');
+        const mcNocough = document.getElementById('mc-nocough');
+
+        const filterOptions = document.querySelectorAll('.filter-option');
+        const calculatorGrid = document.getElementById('calculator-grid');
+        const filterMessage = document.getElementById('filter-message');
+        let currentFilter = 'proceed';
+
+        function handleMcIsaacAgeValidation() {
+            const ageInput = document.getElementById('patient-age-input');
+            const age = parseInt(ageInput.value, 10);
+            const errorMessage = document.getElementById('age-error-message');
+            if (age < 3) {
+                errorMessage.textContent = "Score not validated for children < 3 years old.";
+                errorMessage.style.display = 'block';
+                mcisaacCalc.classList.add('calculator-disabled');
+                return false;
+            } else {
+                errorMessage.style.display = 'none';
+                mcisaacCalc.classList.remove('calculator-disabled');
+                return true;
+            }
+        }
+
+        function calculateMcIsaacScore() {
+            const isGated = mcisaacCalc.classList.contains('calculator-gated');
+            const isAgeInvalid = !handleMcIsaacAgeValidation();
+
+            if (isGated || isAgeInvalid) {
+                document.getElementById('mcisaac-score-value').textContent = '-';
+                document.getElementById('mcisaac-interpretation').textContent = 'Awaiting valid inputs...';
+                document.getElementById('age-points-display').textContent = '(-)';
+                updateClinicalSynthesis();
+                return;
+            }
+
+            const scoreValueEl = document.getElementById('mcisaac-score-value');
+            const interpretationEl = document.getElementById('mcisaac-interpretation');
+            const ageInput = document.getElementById('patient-age-input');
+            const agePointsDisplay = document.getElementById('age-points-display');
+            
+            let score = 0;
+            document.querySelectorAll('#mcisaac-calculator .criteria-group input[type="checkbox"]').forEach(box => {
+                if (box.checked) score++;
+            });
+
+            const age = parseInt(ageInput.value, 10);
+            let agePoints = 0;
+            if (age >= 3 && age <= 14) agePoints = 1;
+            else if (age >= 45) agePoints = -1;
+            
+            score += agePoints;
+            agePointsDisplay.textContent = `(${agePoints >= 0 ? '+' : ''}${agePoints})`;
+
+            currentMcIsaacScore = score;
+            scoreValueEl.textContent = score;
+            
+            const interpretations = {
+                "-1": "Risk of Strep: <1%", "0": "Risk of Strep: ~1-2.5%",
+                "1": "Risk of Strep: ~5-10%", "2": "Risk of Strep: ~11-17%",
+                "3": "Risk of Strep: ~28-35%", "4": "Risk of Strep: ~51-53%", "5": "Risk of Strep: ~51-53%"
+            };
+            interpretationEl.textContent = interpretations[Math.max(-1, Math.min(score, 5))] || "Risk of Strep: <1%";
+            updateClinicalSynthesis();
+        }
+
+        function calculateFeverPAINScore() {
+            const scoreValueEl = document.getElementById('feverpain-score-value');
+            const interpretationEl = document.getElementById('feverpain-interpretation');
+            const feverpainSynthesis = document.getElementById('feverpain-synthesis');
+            
+            let score = 0;
+            let isAnyChecked = false;
+            feverpainChecks.forEach(box => {
+                if (box.checked) {
+                    score++;
+                    isAnyChecked = true;
+                }
+            });
+            
+            feverpainSynthesis.classList.toggle('hidden', !isAnyChecked);
+
+            currentFeverPAINScore = score;
+            scoreValueEl.textContent = score;
+            
+            const interpretations = ["~10-13%", "~15-18%", "~34-40%", "~34-40%", "~62-65%", "~62-65%"];
+            interpretationEl.textContent = `Risk of Strep: ${interpretations[score]}`;
+            updateClinicalSynthesis();
+        }
+        
+        function updateClinicalSynthesis() {
+            const mcisaacEl = document.getElementById('mcisaac-synthesis');
+            const feverpainEl = document.getElementById('feverpain-synthesis');
+            if (!feverpainEl) return;
+
+            const f = currentFeverPAINScore;
+            const isMcIsaacGated = mcisaacCalc.classList.contains('calculator-gated');
+            const isAgeInvalid = mcisaacCalc.classList.contains('calculator-disabled');
+
+            let feverpainText = '<h5>FeverPAIN Score Interpretation (NICE Guidelines)</h5><p>';
+            if (f <= 1) feverpainText += '<strong>Next Steps:</strong> No antibiotic prescription needed.';
+            else if (f <= 3) feverpainText += '<strong>Next Steps:</strong> Consider a delayed/back-up antibiotic prescription.';
+            else feverpainText += '<strong>Next Steps:</strong> Consider an immediate or delayed antibiotic prescription.';
+            feverpainText += '</p>';
+
+            if (f > 1) {
+                feverpainText += `<div class="pearl-trigger">What is a Delayed Prescription? ⓘ</div>
+                                <div class="clinical-pearl" id="delayed-rx-pearl"><strong>What is a Delayed Prescription?</strong> It is a strategy where a prescription for antibiotics is given to the patient, but they are advised to wait 2-3 days before filling it. If symptoms improve on their own, the prescription is not used. This reduces unnecessary antibiotic use while providing a safety net.</div>`;
+            }
+            feverpainEl.innerHTML = feverpainText;
+
+            if (f > 1) {
+                const pearlTrigger = feverpainEl.querySelector('.pearl-trigger');
+                const pearlContent = feverpainEl.querySelector('#delayed-rx-pearl');
+                if (pearlTrigger && pearlContent) {
+                    pearlTrigger.addEventListener('click', () => pearlContent.classList.toggle('visible'));
+                }
+            }
+
+            if (mcisaacEl) {
+                mcisaacEl.style.display = isMcIsaacGated ? 'none' : 'block';
+                if (!isMcIsaacGated) {
+                    let mcisaacText = '<h5>McIsaac Score Interpretation</h5><p>';
+                    if (isAgeInvalid) {
+                        mcisaacText += 'This score is not validated for children under 3 years old. Please enter a valid age.';
+                    } else {
+                        if (currentMcIsaacScore <= 1) mcisaacText += '<strong>Next Steps:</strong> No antibiotic or throat swab/culture necessary.';
+                        else if (currentMcIsaacScore === 2) mcisaacText += '<strong>Next Steps:</strong> Consider throat swab and/or culture.';
+                        else mcisaacText += '<strong>Next Steps:</strong> Consider throat swab/culture and/or empiric antibiotics.';
+                    }
+                    mcisaacEl.innerHTML = mcisaacText + '</p>';
+                }
+            }
+        }
+
+        function toggleMcIsaac() {
+            mcisaacCalc.classList.toggle('calculator-gated', !attendedCheckbox.checked);
+            calculateMcIsaacScore();
+        }
+        
+        function syncAndLock(sourceEl, targetEl) {
+            const targetLabel = targetEl.closest('.custom-checkbox-label');
+            targetEl.checked = sourceEl.checked;
+            targetEl.disabled = sourceEl.checked;
+            targetLabel.classList.toggle('locked', sourceEl.checked);
+        }
+
+        function syncExudate() {
+            mcExudates.checked = fpPurulence.checked || fpInflamed.checked;
+            calculateMcIsaacScore();
+        }
+
+        function updateCalculatorVisibility() {
+            calculatorGrid.classList.toggle('grid-gated', currentFilter === 'redflag' || currentFilter === 'viral');
+            if (currentFilter === 'redflag') filterMessage.textContent = "Scoring is not necessary. Proceed with immediate evaluation for red flags.";
+            else if (currentFilter === 'viral') filterMessage.textContent = "Scoring is not indicated for typical viral pharyngitis. Recommend symptomatic care.";
+            else filterMessage.textContent = "";
+        }
+
+        filterOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const clickedFilter = option.dataset.filter;
+                if (clickedFilter === currentFilter) {
+                    currentFilter = null;
+                    filterOptions.forEach(opt => opt.classList.remove('selected', 'hidden'));
+                } else {
+                    currentFilter = clickedFilter;
+                    filterOptions.forEach(opt => {
+                        const isSelected = opt.dataset.filter === clickedFilter;
+                        opt.classList.toggle('selected', isSelected);
+                        opt.classList.toggle('hidden', !isSelected);
+                    });
+                }
+                updateCalculatorVisibility();
+            });
+        });
+
+        attendedCheckbox.addEventListener('change', toggleMcIsaac);
+        fpFever.addEventListener('change', () => { syncAndLock(fpFever, mcFever); calculateMcIsaacScore(); });
+        fpNocough.addEventListener('change', () => { syncAndLock(fpNocough, mcNocough); calculateMcIsaacScore(); });
+        fpPurulence.addEventListener('change', syncExudate);
+        fpInflamed.addEventListener('change', syncExudate);
+        mcisaacChecks.forEach(input => input.addEventListener('input', calculateMcIsaacScore));
+        feverpainChecks.forEach(input => input.addEventListener('change', calculateFeverPAINScore));
+
+        // Initial state setup
+        toggleMcIsaac();
+        calculateFeverPAINScore();
+        updateCalculatorVisibility();
+    }
 </script>
 </body>
 </html>
